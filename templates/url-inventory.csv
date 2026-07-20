@@ -1,0 +1,26 @@
+URL,Page type,Template,HTTP status,Indexable (y/n),Organic clicks (12mo),Sessions (12mo),# Referring domains,Top keywords,In XML sitemap?,Depth,Word count,Has form?,Gated asset?,Language,Decision (migrate/consolidate/redirect/archive/delete),Destination URL,Owner,Notes
+https://www.officernd.com/,Homepage,home,200,y,,,,,y,0,,n,n,en,migrate,https://www.officernd.com/,,Keep URL frozen
+https://www.officernd.com/coworking-software/,Pillar,solution-pillar,200,y,,,,coworking software,y,1,,n,n,en,migrate,https://www.officernd.com/coworking-software/,,High-equity pillar
+https://www.officernd.com/coworking-software/coworking-crm/,Feature,solution-child,200,y,,,,coworking crm,y,2,,n,n,en,migrate,,,
+https://www.officernd.com/coworking-software/coworking-operations/,Feature,solution-child,200,y,,,,,y,2,,n,n,en,migrate,,,
+https://www.officernd.com/coworking-software/member-mobile-apps/,Feature,solution-child,200,y,,,,coworking app,y,2,,n,n,en,migrate,,,
+https://www.officernd.com/coworking-software/hybrid-work/,Feature,solution-child,200,y,,,,hybrid work,y,2,,n,n,en,migrate,,,
+https://www.officernd.com/manage-coworking/,Solution,solution,200,y,,,,manage coworking,y,1,,n,n,en,VERIFY-consolidate?,,,Possible overlap with pillar
+https://www.officernd.com/why-officernd/,Corporate,standard,200,y,,,,,y,1,,n,n,en,migrate,,,
+https://www.officernd.com/integrations/,Index,integrations-index,200,y,,,,integrations,y,1,,n,n,en,migrate,,,50+ child pages to enumerate
+https://www.officernd.com/pricing/flex/,Pricing,pricing,200,y,,,,officernd pricing,y,2,,y,n,en,migrate,,,Check for /pricing/workplace/ etc
+https://www.officernd.com/resources/,Hub,resources-hub,200,y,,,,,y,1,,n,n,en,migrate,,,Needs Webflow filter (Finsweet)
+https://www.officernd.com/resources-test/,Test,unknown,200,y,,,,,VERIFY,1,,n,n,en,delete,,,FINDING: stray test page indexed - noindex+remove
+https://www.officernd.com/blog/,Blog index,blog-index,200,y,,,,,y,1,,n,n,en,migrate,,,
+https://www.officernd.com/blog/coworking-tech-stack/,Blog post,blog-post,200,y,,,,coworking integrations,y,2,,n,n,en,migrate,,,Example row - enumerate all posts
+https://www.officernd.com/blog/hybrid-work-playbook-report/,Blog/gated,blog-post,200,y,,,,hybrid work playbook,y,2,,y,y,en,migrate,,,Gated report
+https://www.officernd.com/about/,Corporate,standard,200,y,,,,,y,1,,n,n,en,migrate,,,
+https://www.officernd.com/contact-us/,Contact,form-page,200,y,,,,,y,1,,y,n,en,migrate,,,Contact form
+https://www.officernd.com/integrations/,Index,integrations-index,200,y,,,,,y,1,,n,n,en,migrate,,,
+https://www.officernd.com/security/,External,external-embed,200,y,,,,,VERIFY,1,,n,n,en,redirect-external,https://www.officernd.com/security/,,UpGuard Trust Center - keep external
+https://www.officernd.com/wp-content/uploads/2019/05/OfficeRnD_Opening_Second_Workspace_Ebook.pdf,PDF asset,binary,200,y,,,,,n,,,n,y,en,migrate-asset,,,Gated ebook - keep URL if backlinks
+_TEMPLATE_,category-archive,archive,200,VERIFY,,,,,y,,,n,n,en,VERIFY,,,Decide index/noindex/redirect for /category/*
+_TEMPLATE_,tag-archive,archive,200,VERIFY,,,,,y,,,n,n,en,VERIFY,,,Decide for /tag/*
+_TEMPLATE_,author-archive,archive,200,VERIFY,,,,,y,,,n,n,en,VERIFY,,,Decide for /author/*
+_TEMPLATE_,thank-you,ty-page,200,n,,,,,n,,,n,n,en,VERIFY,,,Find via GA4 conversions - keep trackable
+_TEMPLATE_,campaign-lp,landing,200,VERIFY,,,,,VERIFY,,,y,VERIFY,en,VERIFY,,,Find via ad accounts + utm in GA4

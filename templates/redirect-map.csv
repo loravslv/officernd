@@ -1,0 +1,9 @@
+Old path,New path,Type,Reason,Has backlinks?,Tested (staging),Tested (prod),Final status code,Notes
+/resources-test/,/resources/,301,Delete test page - send to hub,VERIFY,,,,Or 410 if no backlinks
+http://officernd.com/*,https://www.officernd.com/*,301,Force https+www,y,,,,Host+protocol normalization - handle at CDN
+https://officernd.com/*,https://www.officernd.com/*,301,Force www,y,,,,Apex to www
+/BLOG/*,/blog/*,301,Force lowercase,VERIFY,,,,Case normalization rule (Cloudflare)
+/blog/old-post-slug,/blog/new-post-slug,301,Slug change on migration,VERIFY,,,,Example - one row per changed slug
+/category/*,/blog/?category=*,301,Archive handling (if consolidating),VERIFY,,,,Decision D3 - or keep as CMS category page
+_RULE_,,301,Trailing-slash: non-slash -> slash,y,,,,Enforce single canonical form site-wide
+_INSTRUCTIONS_,,301,One row per non-delete URL from url-inventory.csv,,,,,Every source single-hop; no chains; no loops

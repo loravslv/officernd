@@ -1,0 +1,23 @@
+System,What for,Owner (confirm),Admin/Backup,Access needed by,Access confirmed (y/n),Notes
+WordPress admin + hosting,Export/config/staging + rollback source,IT/Web,,Dev+SEO,,Keep live 2 weeks post-launch
+Webflow workspace + site,Build target,Marketing/Web,,Dev+Designer,,Confirm plan tier vs CMS limits
+Domain registrar,DNS records for cutover,IT,,DevOps,,Lower TTL 48h pre-launch
+DNS/CDN (Cloudflare?),DNS/SSL/redirects/WAF/headers,IT/DevOps,,DevOps,,Bulk+wildcard redirects here (D4)
+Google Tag Manager,Tag migration,Marketing ops,,Analytics,,
+GA4,Baseline + events,Marketing ops,,Analytics,,
+Google Search Console,Baseline/sitemaps/monitoring,SEO,,SEO,,Verify domain property
+Bing Webmaster Tools,Bing baseline/sitemap,SEO,,SEO,,
+CRM (HubSpot?),Forms/attribution/workflows,Marketing ops,,Dev+Marketing ops,,Confirm CRM vendor
+Cookie-consent platform,Consent config,Legal/Marketing,,Analytics/Dev,,Confirm CMP vendor
+Webinar tool,Registrations,Marketing ops,,Dev,,VERIFY vendor
+Chat tool,Sales chat,Marketing ops,,Dev,,VERIFY vendor
+Scheduling (Chili Piper/Calendly),Demo booking,Sales ops,,Dev,,VERIFY vendor
+Google Ads,Pixels/URLs/conversions,Growth/PPC,,Analytics,,Campaign URL audit source
+LinkedIn Ads,Pixels/conversions,Growth,,Analytics,,
+Meta Ads,Pixels/conversions,Growth,,Analytics,,
+Bing Ads,Pixels/conversions,Growth,,Analytics,,
+Ahrefs/Semrush,Baseline/backlinks,SEO,,SEO,,
+Email/marketing automation,Campaign URLs/deliverability,Marketing ops,,Marketing ops,,Old campaign URL source
+UpGuard Trust Center,/security/ external,Security,,Security,,Keep external
+Rank tracker,Ranking baseline,SEO,,SEO,,
+_INSTRUCTIONS_,Access gate - no build task starts until its systems confirmed,PM,,All,,First gate (Week 1)

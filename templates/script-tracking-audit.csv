@@ -1,0 +1,14 @@
+Name,Vendor,Purpose,Currently loads via,Load location,Still needed?,New home (GTM/Webflow code/integration),Consent category,Owner,Notes
+GA4,Google,Web analytics,VERIFY (GTM or hardcoded),head,y,GTM,statistics,Analytics,Single source of truth - avoid double tag
+Google Tag Manager,Google,Tag container,theme header,head,y,Webflow custom code (head),necessary-loader,Analytics,Container snippet only
+Google Ads conversion+remarketing,Google,PPC conversions/remarketing,GTM,-,VERIFY,GTM,marketing,Growth/PPC,Dedupe with event_id
+LinkedIn Insight Tag,LinkedIn,B2B remarketing/conversions,GTM,-,VERIFY,GTM,marketing,Growth,B2B primary channel likely
+Meta Pixel,Meta,Remarketing/conversions,GTM,-,VERIFY,GTM,marketing,Growth,Confirm if used
+Bing UET,Microsoft,Ads conversions,GTM,-,VERIFY,GTM,marketing,Growth,
+HubSpot tracking code,HubSpot,CRM tracking/attribution,VERIFY,head,y (likely),Native integration,statistics/marketing,Marketing ops,Confirm CRM = HubSpot
+Cookie consent (CMP),VERIFY Cookiebot/OneTrust,Consent management,head,head,y,Webflow custom code (first),necessary,Legal/Marketing,Must load before all tags - Consent Mode v2
+Chat widget,VERIFY Intercom/Drift/HS,Sales chat,VERIFY,body,VERIFY,GTM or native,functional,Marketing ops,Consent-gate
+Heatmaps/replay,VERIFY Hotjar/Clarity,UX analytics,GTM,-,VERIFY,GTM,statistics,Marketing,Confirm if present
+Schema JSON-LD,-,Structured data,theme/plugin,head,y,Webflow custom code / CMS-bound,necessary,SEO,Rebuild Org/Article/Breadcrumb/FAQ/Video
+Video embed (Wistia/YT),VERIFY,Webinar/demo video,inline,body,y,Webflow embed,functional,Content,
+_INSTRUCTIONS_,,Inventory BOTH page source and current GTM container,,,,,,Analytics,Cross-check hardcoded vs GTM tags

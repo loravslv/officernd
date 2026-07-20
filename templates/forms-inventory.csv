@@ -1,0 +1,7 @@
+Form name,Page(s),Fields,Required/validation,Hidden fields,Routing/notification,CRM object created,Consent checkbox,Spam protection,Success behavior,Error handling,Owner,Notes
+Book a demo,/ (and CTAs sitewide),"Name,Email,Company,Country,Phone,Message",Email+required fields,"utm_*,gclid,page_url,form_source",Sales round-robin + Slack/email notify,Contact+Deal (lifecycle=SQL),y (GDPR),reCAPTCHA v3,Redirect to /thank-you-demo/ (trackable),Inline error + retry,Marketing ops,Primary conversion - test attribution end-to-end
+Contact us,/contact-us/,"Name,Email,Subject,Message",Email+required,"utm_*,page_url",Support/sales inbox,Contact,y,reCAPTCHA/honeypot,Inline success msg,Inline error,Marketing ops,
+Gated asset download,Resource/ebook LPs,"Name,Email,Company",Email+required,"utm_*,asset_id,page_url",Deliver PDF + email + CRM tag,Contact (asset interest tag),y,reCAPTCHA,Redirect to TY + deliver file,Inline error,Marketing ops,One flow per gated asset
+Webinar registration,Webinar pages,"Name,Email,Company",Email+required,"utm_*,webinar_id",Webinar tool (Zoom/GTW/Livestorm) + CRM,Contact + registrant,y,tool-native,Confirmation page/email,tool-native,Marketing ops,VERIFY webinar vendor
+Newsletter subscribe,Blog/footer,Email,Email,utm_*,CRM subscribe list,Contact (subscriber),y,honeypot,Inline success,Inline error,Marketing ops,Could be Webflow-native (D5 option B)
+_INSTRUCTIONS_,,Submit a REAL test lead through every form on staging AND prod,,,,,,,,,Sales ops,Verify CRM record + attribution + notification before sign-off
