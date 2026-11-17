@@ -1,0 +1,406 @@
+<style>
+  /* Consent banner (#cookie-banner in this component). Two views in the same card, same approach as Design System 3.0:
+     [data-consent-view="summary"] = message + Customize / Reject all / Accept all,
+     [data-consent-view="settings"] = one row per category ([data-consent-category]) with a switch ([data-consent-switch]).
+     Buttons work by their link: #consent-customize, #consent-reject, #consent-save, #consent-accept.
+     Any link to #cookie-settings (Footer > Cookie settings) opens the settings view. Layout and switch looks are
+     Webflow classes (cookie__*). Region rules, stored choice and Consent Mode defaults: Site settings > head.
+     Kept in code: fixed position + open/close transition of the card (moved into <body> by the script). */
+  #cookie-banner { display: none; }
+
+  body > #cookie-banner {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 9980;
+    display: block;
+    width: min(450px, calc(100vw - 32px));
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition: opacity 0.2s ease-in, transform 0.2s ease-in, visibility 0s linear 0.2s;
+  }
+
+  body > #cookie-banner:focus { outline: none; }
+
+  body > #cookie-banner.is--open {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1), transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s;
+  }
+
+  body > #cookie-banner .cookie__info-wrapper {
+    position: static;
+    inset: auto;
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 16px;
+    border: 1px solid var(--_theme---gray-mode--200);
+    border-radius: var(--_responsive---border-radius--br-12);
+    background-color: var(--_theme---background);
+    color: var(--_theme---text-primary);
+    box-shadow: 0 24px 48px -12px color-mix(in srgb, var(--_theme---text-primary) 16%, transparent);
+  }
+
+  body > #cookie-banner .cookie__view > .p-small:first-child { margin: 0; color: var(--_theme---text-primary); }
+
+  body > #cookie-banner .cookie__info-wrapper a:not(.btn-link):not(.button) {
+    color: var(--_theme---text-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  body > #cookie-banner .cookie__btns-wrapper { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+  @media (max-width: 767px) {
+    body > #cookie-banner { left: 8px; right: 8px; bottom: 8px; width: auto; }
+
+    body > #cookie-banner .cookie__info-wrapper { max-height: calc(100dvh - 16px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body > #cookie-banner,
+    body > #cookie-banner.is--open { transform: none; transition-duration: 0s; }
+
+    body > #cookie-banner .cookie__switch { transition: none; }
+  }
+</style>
+<script>
+  (function () {
+    if (window.__siteConsentUI) {
+      return;
+    }
+    window.__siteConsentUI = true;
+
+    // First-party cookies each category may set. Turning a category off deletes these on this domain.
+    // Add a tool's cookies here when the site adds the tool.
+    var COOKIES = {
+      preferences: /^(messagesUtk|__hs_cookie_cat_pref)$/,
+      analytics: /^(_ga|_gid|_gat|_hj|_clck|_clsk|__hstc|__hssc|__hssrc|hubspotutk)/,
+      marketing: /^(_gcl|_fbp|_fbc|_uet|_ttp|_rdt_uuid|li_|MUID)/
+    };
+    // Outside the EU/EEA, UK and CH tracking is on until the visitor turns it off, so the notice says so.
+    var NOTICE_TEXT =
+      'We use cookies to measure and improve the site and for marketing. You can turn them off at any time. Read our ';
+
+    var box = null;
+    var lastFocus = null;
+
+    function consent() {
+      if (!window.siteConsent) {
+        window.siteConsent = {
+          key: 'site-consent',
+          state: 'default',
+          strict: false,
+          choice: { preferences: true, analytics: true, marketing: true },
+          categories: ['preferences', 'analytics', 'marketing']
+        };
+      }
+      return window.siteConsent;
+    }
+
+    function copy(choice) {
+      var out = {};
+      consent().categories.forEach(function (category) {
+        out[category] = choice[category] === true;
+      });
+      return out;
+    }
+
+    function all(on) {
+      var out = {};
+      consent().categories.forEach(function (category) {
+        out[category] = on;
+      });
+      return out;
+    }
+
+    function stateOf(choice) {
+      var on = consent().categories.filter(function (category) {
+        return choice[category];
+      }).length;
+      if (on === consent().categories.length) {
+        return 'granted';
+      }
+      if (on === 0) {
+        return 'denied';
+      }
+      return 'custom';
+    }
+
+    function save(choice) {
+      var record = copy(choice);
+      record.version = 2;
+      record.t = Date.now();
+      try {
+        localStorage.setItem(consent().key, JSON.stringify(record));
+      } catch (e) {}
+      consent().choice = copy(choice);
+      consent().state = stateOf(choice);
+    }
+
+    function clearCookies(pattern) {
+      var host = location.hostname;
+      var root = host.split('.').slice(-2).join('.');
+      document.cookie.split(';').forEach(function (part) {
+        var name = part.split('=')[0].trim();
+        if (!name || !pattern.test(name)) {
+          return;
+        }
+        ['', host, '.' + host, root, '.' + root].forEach(function (domain) {
+          document.cookie = name + '=; Max-Age=0; path=/' + (domain ? '; domain=' + domain : '');
+        });
+      });
+    }
+
+    function applyHubSpot(choice) {
+      window._hsp = window._hsp || [];
+      window._hsp.push([
+        'setHubSpotConsent',
+        { analytics: choice.analytics, advertisement: choice.marketing, functionality: true }
+      ]);
+      if (!choice.analytics && !choice.marketing) {
+        window._hsp.push(['revokeCookieConsent']);
+      }
+    }
+
+    function decide(choice) {
+      var before = copy(consent().choice);
+      save(choice);
+      var after = consent().choice;
+
+      if (window.gtag && consent().signals) {
+        gtag('consent', 'update', consent().signals(after));
+      }
+      applyHubSpot(after);
+
+      var turnedOff = consent().categories.filter(function (category) {
+        return before[category] && !after[category];
+      });
+      consent().categories.forEach(function (category) {
+        if (!after[category] && COOKIES[category]) {
+          clearCookies(COOKIES[category]);
+        }
+      });
+
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: 'consent_update',
+        consent: consent().state,
+        consent_preferences: after.preferences ? 'granted' : 'denied',
+        consent_analytics: after.analytics ? 'granted' : 'denied',
+        consent_marketing: after.marketing ? 'granted' : 'denied'
+      });
+
+      close();
+
+      // Scripts that already ran (pixels, session recording) keep running until the page reloads.
+      if (turnedOff.length) {
+        setTimeout(function () {
+          location.reload();
+        }, 150);
+      }
+    }
+
+    function views() {
+      return box.querySelectorAll('[data-consent-view]');
+    }
+
+    function showView(name) {
+      views().forEach(function (view) {
+        view.classList.toggle('is--hidden', view.getAttribute('data-consent-view') !== name);
+      });
+    }
+
+    function switches() {
+      return box.querySelectorAll('[data-consent-switch]');
+    }
+
+    function setSwitch(control, on) {
+      control.setAttribute('aria-checked', on ? 'true' : 'false');
+      if (control.getAttribute('aria-disabled') !== 'true') {
+        control.classList.toggle('is--on', on);
+      }
+    }
+
+    function syncSwitches() {
+      var choice = consent().choice;
+      switches().forEach(function (control) {
+        var category = control.getAttribute('data-consent-switch');
+        if (category === 'necessary') {
+          setSwitch(control, true);
+          return;
+        }
+        setSwitch(control, choice[category] === true);
+      });
+    }
+
+    function readSwitches() {
+      var choice = copy(consent().choice);
+      switches().forEach(function (control) {
+        var category = control.getAttribute('data-consent-switch');
+        if (choice.hasOwnProperty(category)) {
+          choice[category] = control.getAttribute('aria-checked') === 'true';
+        }
+      });
+      return choice;
+    }
+
+    function focusFirst() {
+      var target = box.querySelector(
+        '[data-consent-view]:not(.is--hidden) [data-consent-switch]:not([aria-disabled="true"]), [data-consent-view]:not(.is--hidden) a'
+      );
+      if (target) {
+        target.focus();
+      }
+    }
+
+    function open(view, byUser) {
+      if (!box) {
+        return;
+      }
+      syncSwitches();
+      showView(view || 'summary');
+      box.classList.add('is--open');
+      box.setAttribute('aria-hidden', 'false');
+      if (byUser) {
+        lastFocus = document.activeElement;
+        focusFirst();
+      }
+    }
+
+    function close() {
+      if (!box) {
+        return;
+      }
+      box.classList.remove('is--open');
+      box.setAttribute('aria-hidden', 'true');
+      if (lastFocus && lastFocus.focus) {
+        lastFocus.focus();
+      }
+      lastFocus = null;
+    }
+
+    // Switches are Webflow Divs: give them button semantics and a name from their category title.
+    function labelSwitches() {
+      switches().forEach(function (control) {
+        var row = control.closest('[data-consent-category]');
+        var name = row && row.querySelector('.cookie__category-text > :first-child');
+        control.setAttribute('role', 'switch');
+        if (control.tagName !== 'BUTTON') {
+          control.setAttribute('tabindex', '0');
+        }
+        if (name) {
+          control.setAttribute('aria-label', name.textContent.trim());
+        }
+      });
+    }
+
+    function toggleSwitch(control) {
+      if (control.getAttribute('aria-disabled') !== 'true') {
+        setSwitch(control, control.getAttribute('aria-checked') !== 'true');
+      }
+    }
+
+    function onBoxClick(e) {
+      var control = e.target.closest('[data-consent-switch]');
+      if (control) {
+        e.preventDefault();
+        toggleSwitch(control);
+        return;
+      }
+      var link = e.target.closest('a[href^="#consent-"]');
+      if (!link) {
+        return;
+      }
+      e.preventDefault();
+      var action = link.getAttribute('href').replace('#consent-', '');
+      if (action === 'accept') {
+        decide(all(true));
+      }
+      if (action === 'reject') {
+        decide(all(false));
+      }
+      if (action === 'save') {
+        decide(readSwitches());
+      }
+      if (action === 'customize') {
+        showView('settings');
+        focusFirst();
+      }
+    }
+
+    function onBoxKey(e) {
+      var control = e.target.closest('[data-consent-switch]');
+      if (control && control.tagName !== 'BUTTON' && (e.key === ' ' || e.key === 'Enter')) {
+        e.preventDefault();
+        toggleSwitch(control);
+      }
+    }
+
+    function init() {
+      box = document.getElementById('cookie-banner');
+      if (!box) {
+        return;
+      }
+      document.body.appendChild(box);
+      box.removeAttribute('style');
+      box.setAttribute('role', 'dialog');
+      box.setAttribute('aria-label', 'Cookie preferences');
+      box.setAttribute('aria-hidden', 'true');
+      labelSwitches();
+      box.addEventListener('click', onBoxClick);
+      box.addEventListener('keydown', onBoxKey);
+
+      if (!consent().strict) {
+        var message = box.querySelector('[data-consent-view="summary"] .p-small');
+        if (message && message.firstChild && message.firstChild.nodeType === 3) {
+          message.firstChild.nodeValue = NOTICE_TEXT;
+        }
+      }
+
+      document.addEventListener('click', function (e) {
+        var trigger = e.target.closest('[data-consent="open"], a[href="#cookie-settings"]');
+        if (!trigger) {
+          return;
+        }
+        e.preventDefault();
+        open('settings', true);
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && box.classList.contains('is--open') && consent().state !== 'pending') {
+          close();
+        }
+      });
+
+      showView('summary');
+      var state = consent().state;
+      if (state === 'pending' || state === 'default') {
+        setTimeout(function () {
+          open('summary', false);
+        }, 600);
+      }
+
+      consent().open = function (view) {
+        open(view || 'settings', true);
+      };
+      consent().set = function (choice) {
+        decide(copy(choice));
+      };
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>

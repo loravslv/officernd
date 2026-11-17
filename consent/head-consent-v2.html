@@ -1,0 +1,195 @@
+<!-- Consent (Google Consent Mode v2, categories) + GTM. Must stay above every other tag. Same approach as Design System 3.0.
+     Categories: necessary (always on), preferences, analytics, marketing. Each maps to Consent Mode signals (SIGNALS).
+     EU/EEA, UK, CH: opt-in. Every category is off until the visitor accepts or saves choices.
+     Everywhere else: opt-out. Categories are on by default; GPC turns marketing off. Reject all or Customize turns them off.
+     Region: browser timezone. Testing on *.webflow.io: ?consent_region=eu or ?consent_region=row forces a region for the tab,
+     ?consent_region=auto clears it.
+     Set GTM_ID per project. Empty = GTM does not load. On *.webflow.io GTM only loads with ?gtm=1 (kept for the tab, ?gtm=0 clears).
+     GTM always loads once set; Google tags follow the Consent Mode signals, other tags must use GTM consent checks.
+     Stored choice: localStorage 'site-consent' { preferences, analytics, marketing, version: 2, t }, valid 365 days.
+     Banner, Customize view and switches: Global CSS & Elements > js__consent. -->
+<script>
+  window.disableHubSpotCookieBanner = true;
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  (function () {
+    var GTM_ID = '';
+    var KEY = 'site-consent';
+    var MAX_AGE = 365 * 864e5;
+    // EU/EEA, UK and CH: opt-in
+    var STRICT = [
+      'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE',
+      'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT',
+      'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH'
+    ];
+    var CATEGORIES = ['preferences', 'analytics', 'marketing'];
+    var SIGNALS = {
+      preferences: ['functionality_storage', 'personalization_storage'],
+      analytics: ['analytics_storage'],
+      marketing: ['ad_storage', 'ad_user_data', 'ad_personalization']
+    };
+
+    function param(name) {
+      var match = location.search.match(new RegExp('[?&]' + name + '=([^&]*)'));
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    // Staging test switches, kept for the tab: undefined reads, null clears, a string saves.
+    function tabValue(name, value) {
+      try {
+        if (value === null) {
+          sessionStorage.removeItem(name);
+        } else if (value !== undefined) {
+          sessionStorage.setItem(name, value);
+        }
+        return sessionStorage.getItem(name);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function choiceOf(on, extra) {
+      var choice = {};
+      for (var i = 0; i < CATEGORIES.length; i++) {
+        choice[CATEGORIES[i]] = on;
+      }
+      for (var key in extra || {}) {
+        choice[key] = extra[key];
+      }
+      return choice;
+    }
+
+    function signals(choice) {
+      var out = { security_storage: 'granted' };
+      for (var category in SIGNALS) {
+        for (var i = 0; i < SIGNALS[category].length; i++) {
+          out[SIGNALS[category][i]] = choice[category] ? 'granted' : 'denied';
+        }
+      }
+      return out;
+    }
+
+    function stateOf(choice, chosen) {
+      var on = 0;
+      for (var i = 0; i < CATEGORIES.length; i++) {
+        if (choice[CATEGORIES[i]]) {
+          on++;
+        }
+      }
+      if (!chosen) {
+        return null;
+      }
+      if (on === CATEGORIES.length) {
+        return 'granted';
+      }
+      if (on === 0) {
+        return 'denied';
+      }
+      return 'custom';
+    }
+
+    var defaultsStrict = signals(choiceOf(false));
+    defaultsStrict.region = STRICT;
+    defaultsStrict.wait_for_update = 500;
+    gtag('consent', 'default', defaultsStrict);
+    gtag('consent', 'default', signals(choiceOf(true)));
+    gtag('set', 'ads_data_redaction', true);
+    gtag('set', 'url_passthrough', true);
+
+    var staging = /\.webflow\.io$/.test(location.hostname);
+
+    var tz = '';
+    try {
+      tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    } catch (e) {}
+    var strict = /^(Europe\/|Atlantic\/(Canary|Madeira|Azores|Reykjavik|Faroe)|Arctic\/Longyearbyen)/.test(tz);
+
+    var test = null;
+    if (staging) {
+      var region = param('consent_region');
+      test = tabValue('site-consent-test', region === 'auto' ? null : region === 'eu' || region === 'row' ? region : undefined);
+      if (test === 'eu' || test === 'row') {
+        strict = test === 'eu';
+      }
+    }
+    var gpc = navigator.globalPrivacyControl === true;
+
+    // Version 1 stored { v: 'granted' | 'denied' | 'acknowledged', t, ver }. Granted and denied are kept as the
+    // same all-or-nothing choice; acknowledged (closed the old notice outside the EU) is asked again.
+    var saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (saved && !(Date.now() - saved.t < MAX_AGE)) {
+        saved = null;
+      }
+      if (saved && saved.version !== 2) {
+        if (saved.v === 'granted' || saved.v === 'denied') {
+          saved = choiceOf(saved.v === 'granted', { version: 2, t: saved.t });
+        } else {
+          saved = null;
+        }
+      }
+    } catch (e) {
+      saved = null;
+    }
+
+    var choice;
+    var state;
+    if (saved) {
+      choice = choiceOf(false);
+      for (var i = 0; i < CATEGORIES.length; i++) {
+        choice[CATEGORIES[i]] = saved[CATEGORIES[i]] === true;
+      }
+      state = stateOf(choice, true);
+    } else if (strict) {
+      choice = choiceOf(false);
+      state = 'pending';
+    } else {
+      choice = choiceOf(true, gpc ? { marketing: false } : {});
+      state = 'default';
+    }
+
+    if (state !== 'default' || gpc || strict) {
+      gtag('consent', 'update', signals(choice));
+    }
+
+    window._hsp = window._hsp || [];
+    window._hsp.push([
+      'setHubSpotConsent',
+      { analytics: choice.analytics, advertisement: choice.marketing, functionality: true }
+    ]);
+
+    window.siteConsent = {
+      key: KEY,
+      version: 2,
+      maxAge: MAX_AGE,
+      state: state,
+      strict: strict,
+      gpc: gpc,
+      test: test,
+      choice: choice,
+      categories: CATEGORIES,
+      signals: signals,
+      stateOf: stateOf
+    };
+
+    if (!GTM_ID) {
+      return;
+    }
+    var gtm = param('gtm');
+    if (staging && tabValue('site-gtm', gtm === '1' ? '1' : gtm === '0' ? null : undefined) !== '1') {
+      return;
+    }
+    (function (win, doc, tagName, layer, containerId) {
+      win[layer] = win[layer] || [];
+      win[layer].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+      var firstScript = doc.getElementsByTagName(tagName)[0],
+        gtmScript = doc.createElement(tagName);
+      gtmScript.async = true;
+      gtmScript.src = 'https://www.googletagmanager.com/gtm.js?id=' + containerId;
+      firstScript.parentNode.insertBefore(gtmScript, firstScript);
+    })(window, document, 'script', 'dataLayer', GTM_ID);
+  })();
+</script>
