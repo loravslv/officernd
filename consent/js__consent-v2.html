@@ -230,8 +230,9 @@
       }
     }
 
+    // Before the first choice the switches show on (Lora 20 Nov). Nothing runs until the visitor saves or accepts.
     function syncSwitches() {
-      var choice = consent().choice;
+      var choice = consent().state === 'pending' ? all(true) : consent().choice;
       switches().forEach(function (control) {
         var category = control.getAttribute('data-consent-switch');
         if (category === 'necessary') {
